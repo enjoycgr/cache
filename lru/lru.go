@@ -20,6 +20,7 @@ type Value interface {
 	Len() int
 }
 
+// New lru
 func New(maxBytes int64, OnEvicted func(string, Value)) *Cache {
 	return &Cache{
 		maxBytes:  maxBytes,
@@ -29,6 +30,7 @@ func New(maxBytes int64, OnEvicted func(string, Value)) *Cache {
 	}
 }
 
+// 添加缓存，并将该元素移动到队列头部，如果超出了缓存限制，执行RemoveOldest
 func (c *Cache) Add(key string, value Value) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
@@ -45,6 +47,7 @@ func (c *Cache) Add(key string, value Value) {
 	}
 }
 
+// 移除队列最尾部的元素
 func (c *Cache) RemoveOldest() {
 	ele := c.ll.Back()
 	if ele != nil {
@@ -58,6 +61,7 @@ func (c *Cache) RemoveOldest() {
 	}
 }
 
+// 获取缓存，并将该缓存移动到对猎头部
 func (c *Cache) Get(key string) (value Value, ok bool) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
