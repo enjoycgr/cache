@@ -23,7 +23,7 @@ func main() {
 		}),
 	)
 
-	addr := "localhost:9999"
+	addr := ":9999"
 	peers := peer.NewHttpPool(addr)
 	http.ListenAndServe(addr, peers)
 }
