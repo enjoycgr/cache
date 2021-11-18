@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"cache/lru"
 	"fmt"
 	"log"
 	"sync"
@@ -19,7 +20,7 @@ func (f GetterFunc) Get(key string) ([]byte, error) {
 
 type Group struct {
 	name      string
-	mainCache cache
+	mainCache *cache
 	getter    Getter
 }
 
@@ -35,8 +36,9 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 
 	groups[name] = &Group{
 		name: name,
-		mainCache: cache{
+		mainCache: &cache{
 			cacheBytes: cacheBytes,
+			lru:        lru.New(cacheBytes, nil),
 		},
 		getter: getter,
 	}
@@ -62,6 +64,10 @@ func (g *Group) Get(key string) (ByteView, error) {
 	}
 
 	return g.load(key)
+}
+
+func (g *Group) Add(key string, value string) {
+	g.mainCache.add(key, ByteView{[]byte(value)})
 }
 
 func (g *Group) load(key string) (ByteView, error) {
