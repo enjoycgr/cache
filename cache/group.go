@@ -2,6 +2,7 @@ package cache
 
 import (
 	"cache/lru"
+	"cache/peer"
 	"fmt"
 	"log"
 	"sync"
@@ -20,8 +21,9 @@ func (f GetterFunc) Get(key string) ([]byte, error) {
 
 type Group struct {
 	name      string
-	mainCache *cache
-	getter    Getter
+	mainCache *cache // 本地的缓存
+	getter    Getter // 未命中缓存时的回调
+	peers     peer.PeerPicker
 }
 
 var (
@@ -53,6 +55,13 @@ func GetGroup(name string) *Group {
 	return g
 }
 
+func (g *Group) RegisterPeers(peers peer.PeerPicker) {
+	if g.peers != nil {
+		panic("RegisterPeerPicker called more than once")
+	}
+	g.peers = peers
+}
+
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, fmt.Errorf("key is required")
@@ -70,11 +79,27 @@ func (g *Group) Add(key string, value string) {
 	g.mainCache.add(key, ByteView{[]byte(value)})
 }
 
-func (g *Group) load(key string) (ByteView, error) {
-	// todo::从远程获取
-	// ...
+func (g *Group) load(key string) (value ByteView, err error) {
+	// 从远程获取
+	if g.peers != nil {
+		if p, ok := g.peers.PickPeer(key); ok {
+			if value, err = g.getFromPeer(p, key); err == nil {
+				return value, nil
+			}
+			log.Println("[Cache] Failed to get from peer", err)
+		}
+	}
 
 	return g.getLocally(key)
+}
+
+func (g *Group) getFromPeer(peer peer.PeerGetter, key string) (ByteView, error) {
+	bytes, err := peer.Get(g.name, key)
+	if err != nil {
+		return ByteView{}, err
+	}
+
+	return ByteView{b: bytes}, nil
 }
 
 func (g *Group) getLocally(key string) (ByteView, error) {

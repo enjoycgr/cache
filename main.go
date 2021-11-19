@@ -4,6 +4,7 @@ import (
 	"cache/cache"
 	"cache/peer"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -13,8 +14,8 @@ var db = map[string]string{
 	"Sam":  "567",
 }
 
-func main() {
-	cache.NewGroup("scores", 2<<20, cache.GetterFunc(
+func createGroup() *cache.Group {
+	return cache.NewGroup("scores", 2<<20, cache.GetterFunc(
 		func(key string) ([]byte, error) {
 			if v, ok := db[key]; ok {
 				return []byte(v), nil
@@ -22,6 +23,35 @@ func main() {
 			return nil, fmt.Errorf("%s not exist", key)
 		}),
 	)
+}
+
+func startCacheServer(addr string, addrs []string, c *cache.Group) {
+	peers := peer.NewHttpPool(addr)
+	// 添加其他节点到一致性哈希中
+	peers.Set(addrs...)
+	c.RegisterPeers(peers)
+	log.Println("cache is running at", addr)
+	log.Fatal(http.ListenAndServe(addr[7:], peers))
+}
+
+func startAPIServer(apiAddr string, c *cache.Group) {
+	http.Handle("/api", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			key := r.URL.Query().Get("key")
+			view, err := c.Get(key)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Write(view.ByteSlice())
+
+		}))
+	log.Println("fontend server is running at", apiAddr)
+	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
+}
+
+func main() {
 
 	addr := ":9999"
 	peers := peer.NewHttpPool(addr)
