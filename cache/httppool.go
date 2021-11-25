@@ -1,10 +1,12 @@
-package peer
+package cache
 
 import (
 	"cache/consistenthash"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 )
@@ -13,6 +15,14 @@ const (
 	defaultBasePath = "/_cache/"
 	defaultReplicas = 50
 )
+
+type PeerPicker interface {
+	PickPeer(key string) (peer PeerGetter, ok bool)
+}
+
+type PeerGetter interface {
+	Get(group string, key string) ([]byte, error)
+}
 
 type HttpPool struct {
 	self        string
@@ -65,7 +75,7 @@ func (p *HttpPool) PickPeer(key string) (PeerGetter, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if peer := p.peers.Get(key); peer != "" && peer != p.self {
-		p.Log("Pick peer %s", peer)
+		p.Log("Pick httppool %s", peer)
 		return p.httpGetters[peer], true
 	}
 
@@ -73,3 +83,35 @@ func (p *HttpPool) PickPeer(key string) (PeerGetter, bool) {
 }
 
 var _ PeerPicker = (*HttpPool)(nil)
+
+type httpGetter struct {
+	baseURL string
+}
+
+// 从其他节点获取数据
+func (h *httpGetter) Get(group string, key string) ([]byte, error) {
+	u := fmt.Sprintf("%v%v/%v",
+		h.baseURL,
+		url.QueryEscape(group),
+		url.QueryEscape(key),
+	)
+
+	res, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("server returned: %v", res.Status)
+	}
+
+	bytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reding response body: %v", err)
+	}
+
+	return bytes, nil
+}
+
+var _ PeerGetter = (*httpGetter)(nil)

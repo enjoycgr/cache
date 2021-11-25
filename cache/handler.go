@@ -1,7 +1,6 @@
-package peer
+package cache
 
 import (
-	"cache/cache"
 	"log"
 	"net/http"
 	"strings"
@@ -17,7 +16,7 @@ func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
 	groupName := parts[0]
 	key := parts[1]
 
-	group := cache.GetGroup(groupName)
+	group := GetGroup(groupName)
 	if group == nil {
 		http.Error(w, strings.Join([]string{"no such group", groupName}, ": "), http.StatusNotFound)
 		return
@@ -42,7 +41,7 @@ func (p *HttpPool) post(w http.ResponseWriter, r *http.Request) {
 
 	groupName := parts[0]
 
-	group := cache.GetGroup(groupName)
+	group := GetGroup(groupName)
 	if group == nil {
 		http.Error(w, strings.Join([]string{"no such group", groupName}, ": "), http.StatusNotFound)
 		return

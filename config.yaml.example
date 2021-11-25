@@ -1,0 +1,4 @@
+apihost: localhost:8002
+server:
+  - http://localhost:8001
+  - http://101.43.71.28:8001

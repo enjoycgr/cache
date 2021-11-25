@@ -2,7 +2,6 @@ package cache
 
 import (
 	"cache/lru"
-	"cache/peer"
 	"fmt"
 	"log"
 	"sync"
@@ -23,7 +22,7 @@ type Group struct {
 	name      string
 	mainCache *cache // 本地的缓存
 	getter    Getter // 未命中缓存时的回调
-	peers     peer.PeerPicker
+	peers     PeerPicker
 }
 
 var (
@@ -55,7 +54,7 @@ func GetGroup(name string) *Group {
 	return g
 }
 
-func (g *Group) RegisterPeers(peers peer.PeerPicker) {
+func (g *Group) RegisterPeers(peers PeerPicker) {
 	if g.peers != nil {
 		panic("RegisterPeerPicker called more than once")
 	}
@@ -86,14 +85,14 @@ func (g *Group) load(key string) (value ByteView, err error) {
 			if value, err = g.getFromPeer(p, key); err == nil {
 				return value, nil
 			}
-			log.Println("[Cache] Failed to get from peer", err)
+			log.Println("[Cache] Failed to get from httppool", err)
 		}
 	}
 
 	return g.getLocally(key)
 }
 
-func (g *Group) getFromPeer(peer peer.PeerGetter, key string) (ByteView, error) {
+func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
 	bytes, err := peer.Get(g.name, key)
 	if err != nil {
 		return ByteView{}, err

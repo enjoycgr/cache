@@ -2,8 +2,9 @@ package main
 
 import (
 	"cache/cache"
-	"cache/peer"
+	_ "cache/config"
 	"fmt"
+	"github.com/spf13/viper"
 	"log"
 	"net/http"
 )
@@ -26,8 +27,8 @@ func createGroup() *cache.Group {
 }
 
 func startCacheServer(addr string, addrs []string, c *cache.Group) {
-	peers := peer.NewHttpPool(addr)
-	// 添加其他节点到一致性哈希中
+	peers := cache.NewHttpPool(addr)
+	// 添加其他节点到哈希环
 	peers.Set(addrs...)
 	c.RegisterPeers(peers)
 	log.Println("cache is running at", addr)
@@ -47,13 +48,19 @@ func startAPIServer(apiAddr string, c *cache.Group) {
 			w.Write(view.ByteSlice())
 
 		}))
-	log.Println("fontend server is running at", apiAddr)
+	log.Println("font-end server is running at", apiAddr)
 	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
 }
 
 func main() {
-
-	addr := ":9999"
-	peers := peer.NewHttpPool(addr)
-	http.ListenAndServe(addr, peers)
+	server := viper.Get("server").([]interface{})
+	apihost := viper.Get("apihost").(string)
+	for _, v := range server {
+		fmt.Println(v)
+	}
+	peers := cache.NewHttpPool(apihost)
+	err := http.ListenAndServe(apihost, peers)
+	if err != nil {
+		log.Println("api server start err:", err)
+	}
 }
