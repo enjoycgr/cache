@@ -12,6 +12,7 @@ type Getter interface {
 	Get(key string) ([]byte, error)
 }
 
+// 接口型函数
 type GetterFunc func(key string) ([]byte, error)
 
 func (f GetterFunc) Get(key string) ([]byte, error) {
@@ -61,6 +62,7 @@ func (g *Group) RegisterPeers(peers PeerPicker) {
 	g.peers = peers
 }
 
+// 从本地获取缓存，获取不到从其他节点load缓存
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, fmt.Errorf("key is required")
@@ -78,8 +80,8 @@ func (g *Group) Add(key string, value string) {
 	g.mainCache.add(key, ByteView{[]byte(value)})
 }
 
+// 从其他节点获取缓存，获取不到调用回调方法
 func (g *Group) load(key string) (value ByteView, err error) {
-	// 从远程获取
 	if g.peers != nil {
 		if p, ok := g.peers.PickPeer(key); ok {
 			if value, err = g.getFromPeer(p, key); err == nil {
@@ -101,6 +103,7 @@ func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
 	return ByteView{b: bytes}, nil
 }
 
+// 回调函数获取value，并存入缓存
 func (g *Group) getLocally(key string) (ByteView, error) {
 	bytes, err := g.getter.Get(key)
 	if err != nil {

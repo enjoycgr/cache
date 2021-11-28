@@ -26,15 +26,18 @@ func createGroup() *cache.Group {
 	)
 }
 
+// addr：本地节点，addrs：其他节点切片，c：group
+// 开启缓存服务
 func startCacheServer(addr string, addrs []string, c *cache.Group) {
 	peers := cache.NewHttpPool(addr)
 	// 添加其他节点到哈希环
 	peers.Set(addrs...)
 	c.RegisterPeers(peers)
-	log.Println("cache is running at", addr)
-	log.Fatal(http.ListenAndServe(addr[7:], peers))
+	log.Printf("cache is running at %s \n", addr)
+	log.Fatal(http.ListenAndServe(addr, peers))
 }
 
+// 开启api服务，和用户交互
 func startAPIServer(apiAddr string, c *cache.Group) {
 	http.Handle("/api", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
@@ -49,18 +52,16 @@ func startAPIServer(apiAddr string, c *cache.Group) {
 
 		}))
 	log.Println("font-end server is running at", apiAddr)
-	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
+	log.Fatal(http.ListenAndServe(apiAddr, nil))
 }
 
 func main() {
-	server := viper.Get("server").([]interface{})
-	apihost := viper.Get("apihost").(string)
-	for _, v := range server {
-		fmt.Println(v)
-	}
-	peers := cache.NewHttpPool(apihost)
-	err := http.ListenAndServe(apihost, peers)
-	if err != nil {
-		log.Println("api server start err:", err)
-	}
+	server := viper.GetStringSlice("server")
+	apihost := ":" + viper.GetString("apiport")
+	cachehost := ":" + viper.GetString("cacheport")
+
+	group := createGroup()
+	go startCacheServer(cachehost, server, group)
+
+	startAPIServer(apihost, group)
 }

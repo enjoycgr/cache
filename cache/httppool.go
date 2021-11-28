@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 )
 
@@ -41,21 +40,6 @@ func NewHttpPool(self string) *HttpPool {
 
 func (p *HttpPool) Log(format string, v ...interface{}) {
 	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
-}
-
-func (p *HttpPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !strings.HasPrefix(r.URL.Path, p.basePath) {
-		panic("HttpPool serving unexpected path:" + r.URL.Path)
-	}
-	p.Log("%s %s", r.Method, r.URL.Path)
-
-	if r.Method == "GET" {
-		p.get(w, r)
-	}
-
-	if r.Method == "POST" {
-		p.post(w, r)
-	}
 }
 
 // 添加节点
@@ -95,7 +79,6 @@ func (h *httpGetter) Get(group string, key string) ([]byte, error) {
 		url.QueryEscape(group),
 		url.QueryEscape(key),
 	)
-
 	res, err := http.Get(u)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,21 @@ import (
 	"strings"
 )
 
+func (p *HttpPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasPrefix(r.URL.Path, p.basePath) {
+		panic("HttpPool serving unexpected path:" + r.URL.Path)
+	}
+	p.Log("%s %s", r.Method, r.URL.Path)
+
+	if r.Method == "GET" {
+		p.get(w, r)
+	}
+
+	if r.Method == "POST" {
+		p.post(w, r)
+	}
+}
+
 // 获取缓存
 func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
 	parts := strings.SplitN(r.URL.Path[len(p.basePath):], "/", 2)
