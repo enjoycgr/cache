@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	viper.AddConfigPath("I:\\Go\\src\\cache")
+	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
 	fmt.Println(1)
 	err := viper.ReadInConfig()
