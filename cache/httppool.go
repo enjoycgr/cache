@@ -42,7 +42,7 @@ func (p *HttpPool) Log(format string, v ...interface{}) {
 	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
 }
 
-// 添加节点
+// Set 添加节点
 func (p *HttpPool) Set(peers ...string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -54,7 +54,7 @@ func (p *HttpPool) Set(peers ...string) {
 	}
 }
 
-// 选择一个节点，实现PeerPicker接口
+// PickPeer 选择一个节点，实现PeerPicker接口
 func (p *HttpPool) PickPeer(key string) (PeerGetter, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -72,7 +72,7 @@ type httpGetter struct {
 	baseURL string
 }
 
-// 从其他节点获取数据
+// Get 从其他节点获取数据
 func (h *httpGetter) Get(group string, key string) ([]byte, error) {
 	u := fmt.Sprintf("%v%v/%v",
 		h.baseURL,

@@ -34,7 +34,7 @@ func startCacheServer(addr string, addrs []string, c *cache.Group) {
 	peers.Set(addrs...)
 	c.RegisterPeers(peers)
 	log.Printf("cache is running at %s \n", addr)
-	log.Fatal(http.ListenAndServe(addr, peers))
+	log.Fatal(http.ListenAndServe(addr[7:], peers))
 }
 
 // 开启api服务，和用户交互
@@ -52,13 +52,13 @@ func startAPIServer(apiAddr string, c *cache.Group) {
 
 		}))
 	log.Println("font-end server is running at", apiAddr)
-	log.Fatal(http.ListenAndServe(apiAddr, nil))
+	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
 }
 
 func main() {
 	server := viper.GetStringSlice("server")
-	apihost := ":" + viper.GetString("apiport")
-	cachehost := ":" + viper.GetString("cacheport")
+	apihost := viper.GetString("apihost")
+	cachehost := viper.GetString("cachehost")
 
 	group := createGroup()
 	go startCacheServer(cachehost, server, group)

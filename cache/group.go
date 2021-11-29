@@ -7,12 +7,12 @@ import (
 	"sync"
 )
 
-// 未命中获取数据源的回调
+// Getter 未命中获取数据源的回调
 type Getter interface {
 	Get(key string) ([]byte, error)
 }
 
-// 接口型函数
+// GetterFunc 接口型函数
 type GetterFunc func(key string) ([]byte, error)
 
 func (f GetterFunc) Get(key string) ([]byte, error) {

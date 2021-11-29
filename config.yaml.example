@@ -1,5 +1,5 @@
-cacheport: 8001
-apiport: 8002
+cachehost: http://localhost:8001
+apihost: http://localhost:8002
 server:
   - http://localhost1:8001
   - http://localhost2:8001
