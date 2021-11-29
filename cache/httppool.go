@@ -21,6 +21,7 @@ type PeerPicker interface {
 
 type PeerGetter interface {
 	Get(group string, key string) ([]byte, error)
+	Set(Group string, key string, value string) error
 }
 
 type HttpPool struct {
@@ -95,6 +96,27 @@ func (h *httpGetter) Get(group string, key string) ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+func (h *httpGetter) Set(group string, key string, value string) error {
+	u := fmt.Sprintf("%v%v",
+		h.baseURL,
+		url.QueryEscape(group),
+	)
+	res, err := http.PostForm(u, url.Values{
+		"key":   {key},
+		"value": {value},
+	})
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned: %v", res.Status)
+	}
+
+	return nil
 }
 
 var _ PeerGetter = (*httpGetter)(nil)

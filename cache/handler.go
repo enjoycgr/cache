@@ -65,6 +65,9 @@ func (p *HttpPool) post(w http.ResponseWriter, r *http.Request) {
 	key := r.PostForm.Get("key")
 	value := r.PostForm.Get("value")
 	log.Println(key, value)
-	group.Add(key, value)
+	if err := group.Set(key, value); err != nil {
+		http.Error(w, strings.Join([]string{"Set cache error", err.Error()}, ": "), http.StatusNotFound)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }

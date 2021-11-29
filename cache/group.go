@@ -62,7 +62,7 @@ func (g *Group) RegisterPeers(peers PeerPicker) {
 	g.peers = peers
 }
 
-// 从本地获取缓存，获取不到从其他节点load缓存
+// Get 从本地获取缓存，获取不到从其他节点load缓存
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, fmt.Errorf("key is required")
@@ -74,6 +74,17 @@ func (g *Group) Get(key string) (ByteView, error) {
 	}
 
 	return g.load(key)
+}
+
+func (g *Group) Set(key string, value string) error {
+	if g.peers != nil {
+		if p, ok := g.peers.PickPeer(key); ok {
+			return g.setFromPeer(p, key, value)
+		}
+	}
+	view := ByteView{b: cloneBytes([]byte(value))}
+	g.populateCache(key, view)
+	return nil
 }
 
 func (g *Group) Add(key string, value string) {
@@ -101,6 +112,11 @@ func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
 	}
 
 	return ByteView{b: bytes}, nil
+}
+
+func (g *Group) setFromPeer(peer PeerGetter, key string, value string) error {
+	err := peer.Set(g.name, key, value)
+	return err
 }
 
 // 回调函数获取value，并存入缓存
