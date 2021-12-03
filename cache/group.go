@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"cache/cachepb"
 	"cache/lru"
 	"fmt"
 	"log"
@@ -76,6 +77,7 @@ func (g *Group) Get(key string) (ByteView, error) {
 	return g.load(key)
 }
 
+// Set 设置缓存
 func (g *Group) Set(key string, value string) error {
 	if g.peers != nil {
 		if p, ok := g.peers.PickPeer(key); ok {
@@ -87,6 +89,7 @@ func (g *Group) Set(key string, value string) error {
 	return nil
 }
 
+// Add 添加缓存
 func (g *Group) Add(key string, value string) {
 	g.mainCache.add(key, ByteView{[]byte(value)})
 }
@@ -106,16 +109,28 @@ func (g *Group) load(key string) (value ByteView, err error) {
 }
 
 func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
-	bytes, err := peer.Get(g.name, key)
+	req := &cachepb.GetRequest{
+		Group: g.name,
+		Key:   key,
+	}
+	res := &cachepb.GetResponse{}
+	err := peer.Get(req, res)
+
 	if err != nil {
 		return ByteView{}, err
 	}
 
-	return ByteView{b: bytes}, nil
+	return ByteView{b: res.Value}, nil
 }
 
 func (g *Group) setFromPeer(peer PeerGetter, key string, value string) error {
-	err := peer.Set(g.name, key, value)
+	req := &cachepb.SetRequest{
+		Group: g.name,
+		Key:   key,
+		Value: value,
+	}
+	res := &cachepb.SetResponse{}
+	err := peer.Set(req, res)
 	return err
 }
 

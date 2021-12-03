@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"cache/cachepb"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"net/http"
 	"strings"
@@ -43,8 +45,15 @@ func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := proto.Marshal(&cachepb.GetResponse{
+		Value: view.ByteSlice(),
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(view.ByteSlice())
+	w.Write(body)
 }
 
 // 设置缓存

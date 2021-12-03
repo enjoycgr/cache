@@ -15,7 +15,7 @@ type Map struct {
 	hashMap  map[int]string // 虚拟节点与真实节点的映射表
 }
 
-// 初始化一个map
+// New 初始化一个map
 func New(replicas int, fn Hash) *Map {
 	m := &Map{
 		hash:     fn,
@@ -28,7 +28,7 @@ func New(replicas int, fn Hash) *Map {
 	return m
 }
 
-// 添加到哈希环中,并建立虚拟节点与真实节点的映射关系
+// Add 添加到哈希环中,并建立虚拟节点与真实节点的映射关系
 func (m *Map) Add(keys ...string) {
 	for _, key := range keys {
 		for i := 0; i < m.replicas; i++ {
@@ -40,7 +40,7 @@ func (m *Map) Add(keys ...string) {
 	sort.Ints(m.keys)
 }
 
-// 在哈希环中顺时针找到第一个符合的节点
+// Get 在哈希环中顺时针找到第一个符合的节点
 func (m *Map) Get(key string) string {
 	if len(m.keys) == 0 {
 		return ""

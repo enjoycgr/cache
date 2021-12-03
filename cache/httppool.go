@@ -1,8 +1,10 @@
 package cache
 
 import (
+	"cache/cachepb"
 	"cache/consistenthash"
 	"fmt"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,15 +16,6 @@ const (
 	defaultBasePath = "/_cache/"
 	defaultReplicas = 50
 )
-
-type PeerPicker interface {
-	PickPeer(key string) (peer PeerGetter, ok bool)
-}
-
-type PeerGetter interface {
-	Get(group string, key string) ([]byte, error)
-	Set(Group string, key string, value string) error
-}
 
 type HttpPool struct {
 	self        string
@@ -73,39 +66,44 @@ type httpGetter struct {
 	baseURL string
 }
 
-// Get 从其他节点获取数据
-func (h *httpGetter) Get(group string, key string) ([]byte, error) {
+// Get 从其他节点获取缓存
+func (h *httpGetter) Get(request *cachepb.GetRequest, response *cachepb.GetResponse) error {
 	u := fmt.Sprintf("%v%v/%v",
 		h.baseURL,
-		url.QueryEscape(group),
-		url.QueryEscape(key),
+		url.QueryEscape(request.GetGroup()),
+		url.QueryEscape(request.GetKey()),
 	)
 	res, err := http.Get(u)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server returned: %v", res.Status)
+		return fmt.Errorf("server returned: %v", res.Status)
 	}
 
 	bytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("reding response body: %v", err)
+		return fmt.Errorf("reding response body: %v", err)
 	}
 
-	return bytes, nil
+	if err = proto.Unmarshal(bytes, response); err != nil {
+		return fmt.Errorf("decoding response body: %v", err)
+	}
+
+	return nil
 }
 
-func (h *httpGetter) Set(group string, key string, value string) error {
+// Set 从其他节点中设置缓存
+func (h *httpGetter) Set(request *cachepb.SetRequest, response *cachepb.SetResponse) error {
 	u := fmt.Sprintf("%v%v",
 		h.baseURL,
-		url.QueryEscape(group),
+		url.QueryEscape(request.GetGroup()),
 	)
 	res, err := http.PostForm(u, url.Values{
-		"key":   {key},
-		"value": {value},
+		"key":   {request.GetKey()},
+		"value": {request.GetValue()},
 	})
 	if err != nil {
 		return err
@@ -115,6 +113,8 @@ func (h *httpGetter) Set(group string, key string, value string) error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("server returned: %v", res.Status)
 	}
+
+	response.Res = true
 
 	return nil
 }
