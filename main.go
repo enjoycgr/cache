@@ -3,7 +3,7 @@ package main
 import (
 	"cache/cache"
 	_ "cache/config"
-	"cache/rpc/server"
+	"cache/rpc"
 	"fmt"
 	"log"
 	"net"
@@ -66,7 +66,7 @@ func startRpcServer(addr chan string) {
 	}
 	log.Println("start rpc server on", l.Addr())
 	addr <- l.Addr().String()
-	server.Accept(l)
+	rpc.Accept(l)
 }
 
 func main() {
@@ -81,7 +81,7 @@ func main() {
 	log.SetFlags(0)
 	addr := make(chan string)
 	go startRpcServer(addr)
-	client, _ := server.Dial("tcp", <-addr)
+	client, _ := rpc.Dial("tcp", <-addr)
 	defer func() {
 		_ = client.Close()
 	}()

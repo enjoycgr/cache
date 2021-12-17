@@ -1,4 +1,4 @@
-package server
+package rpc
 
 import (
 	"cache/rpc/codec"
@@ -60,6 +60,7 @@ func (client *Client) IsAvailable() bool {
 	return !client.shutdown && !client.closing
 }
 
+// registerCall 发送请求第一步，注册call，添加到pending集合中
 func (client *Client) registerCall(call *Call) (uint64, error) {
 	client.mu.Lock()
 	defer client.mu.Unlock()
@@ -73,6 +74,7 @@ func (client *Client) registerCall(call *Call) (uint64, error) {
 	return call.Seq, nil
 }
 
+// removeCall 请求结束后，将call从pending集合中移除
 func (client *Client) removeCall(seq uint64) *Call {
 	client.mu.Lock()
 	defer client.mu.Unlock()
@@ -81,6 +83,7 @@ func (client *Client) removeCall(seq uint64) *Call {
 	return call
 }
 
+// terminateCalls 中断所有正在连接的call
 func (client *Client) terminateCalls(err error) {
 	client.sending.Lock()
 	defer client.sending.Unlock()
@@ -94,6 +97,7 @@ func (client *Client) terminateCalls(err error) {
 	}
 }
 
+// receive 接收响应
 func (client *Client) receive() {
 	var err error
 	for err == nil {
@@ -121,7 +125,9 @@ func (client *Client) receive() {
 	client.terminateCalls(err)
 }
 
+// NewClient 初始化client
 func NewClient(conn net.Conn, opt *Option) (*Client, error) {
+	// 根据option，获得编码方式
 	f := codec.NewCodecFuncMap[opt.CodecType]
 	if f == nil {
 		err := fmt.Errorf("invalid codec type %s", opt.CodecType)
@@ -149,6 +155,7 @@ func newClientCodec(cc codec.Codec, opt *Option) *Client {
 	return client
 }
 
+// parseOptions 使用可选参数，支持用户传入option，不传入则使用默认option
 func parseOptions(opts ...*Option) (*Option, error) {
 	if len(opts) == 0 || opts[0] == nil {
 		return DefaultOption, nil
@@ -165,6 +172,7 @@ func parseOptions(opts ...*Option) (*Option, error) {
 	return opt, nil
 }
 
+// Dial
 func Dial(network, address string, opts ...*Option) (client *Client, err error) {
 	opt, err := parseOptions(opts...)
 	if err != nil {
@@ -211,6 +219,7 @@ func (client *Client) send(call *Call) {
 	}
 }
 
+// Go 异步call
 func (client *Client) Go(serviceMethod string, args, reply interface{}, done chan *Call) *Call {
 	if done == nil {
 		done = make(chan *Call, 10)
@@ -226,4 +235,10 @@ func (client *Client) Go(serviceMethod string, args, reply interface{}, done cha
 	}
 	client.send(call)
 	return call
+}
+
+// Call 同步call
+func (client *Client) Call(serviceMethod string, args, reply interface{}) error {
+	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+	return call.Error
 }

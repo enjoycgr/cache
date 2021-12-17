@@ -1,4 +1,4 @@
-package server
+package rpc
 
 import (
 	"cache/rpc/codec"
@@ -23,7 +23,7 @@ type Option struct {
 
 var DefaultOption = &Option{
 	MagicNumber: MagicNumber,
-	CodecType:   codec.GobType,
+	CodecType:   codec.JsonType,
 }
 
 type Server struct{}
@@ -45,10 +45,12 @@ func (server *Server) Accept(lis net.Listener) {
 	}
 }
 
+// Accept
 func Accept(lis net.Listener) {
 	DefaultServer.Accept(lis)
 }
 
+// ServeConn 处理conn
 func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 	defer func() {
 		_ = conn.Close()
