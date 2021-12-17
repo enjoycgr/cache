@@ -124,7 +124,6 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	req := &request{h: h}
 	// TODO
 	req.argv = reflect.New(reflect.TypeOf(""))

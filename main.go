@@ -3,10 +3,12 @@ package main
 import (
 	"cache/cache"
 	_ "cache/config"
+	"cache/rpc/server"
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
+	"net"
 	"net/http"
+	"sync"
 )
 
 var db = map[string]string{
@@ -57,13 +59,47 @@ func startAPIServer(apiAddr string, c *cache.Group) {
 	log.Fatal(http.ListenAndServe(":8002", nil))
 }
 
+func startRpcServer(addr chan string) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		log.Fatal("network error:", err)
+	}
+	log.Println("start rpc server on", l.Addr())
+	addr <- l.Addr().String()
+	server.Accept(l)
+}
+
 func main() {
-	server := viper.GetStringSlice("server")
-	apihost := viper.GetString("apihost")
-	cachehost := viper.GetString("cachehost")
+	//server := viper.GetStringSlice("server")
+	//apihost := viper.GetString("apihost")
+	//cachehost := viper.GetString("cachehost")
+	//
+	//group := createGroup()
+	//go startCacheServer(cachehost, server, group)
+	//
+	//startAPIServer(apihost, group)
+	log.SetFlags(0)
+	addr := make(chan string)
+	go startRpcServer(addr)
+	client, _ := server.Dial("tcp", <-addr)
+	defer func() {
+		_ = client.Close()
+	}()
 
-	group := createGroup()
-	go startCacheServer(cachehost, server, group)
-
-	startAPIServer(apihost, group)
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			args := fmt.Sprintf("rpc req %d", i)
+			var reply string
+			//if err := client.Go("Foo.Sum", args, &reply, nil); err != nil {
+			//	log.Fatal("call Foo.Sum error:", err)
+			//}
+			Call := client.Go("Foo.Sum", args, &reply, nil)
+			<-Call.Done
+			log.Println("reply:", reply)
+		}(i)
+	}
+	wg.Wait()
 }

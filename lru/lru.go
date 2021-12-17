@@ -1,4 +1,4 @@
-// lru 缓存淘汰策略
+// Package lru 缓存淘汰策略
 package lru
 
 import "container/list"
@@ -30,7 +30,7 @@ func New(maxBytes int64, OnEvicted func(string, Value)) *Cache {
 	}
 }
 
-// 添加缓存，并将该元素移动到队列头部，如果超出了缓存限制，执行RemoveOldest
+// Add 添加缓存，并将该元素移动到队列头部，如果超出了缓存限制，执行RemoveOldest
 func (c *Cache) Add(key string, value Value) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
