@@ -36,7 +36,7 @@ func (p *HttpPool) Log(format string, v ...interface{}) {
 	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
 }
 
-// Set 添加节点
+// Set 初始化consistent hash，并添加节点
 func (p *HttpPool) Set(peers ...string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

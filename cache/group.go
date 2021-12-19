@@ -89,11 +89,6 @@ func (g *Group) Set(key string, value string) error {
 	return nil
 }
 
-// Add 添加缓存
-func (g *Group) Add(key string, value string) {
-	g.mainCache.add(key, ByteView{[]byte(value)})
-}
-
 // 从其他节点获取缓存，获取不到调用回调方法
 func (g *Group) load(key string) (value ByteView, err error) {
 	if g.peers != nil {
