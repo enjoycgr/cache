@@ -16,11 +16,14 @@ func main() {
 	if err != nil {
 		log.Fatalln("network dial error: ", err)
 	}
-	args := Args{
+	args := &Args{
 		1,
 		2,
 	}
-	var reply *int
-	client.Call(context.Background(), "Foo.Sum", args, reply)
-	fmt.Println(&reply)
+	var reply int
+	err = client.Call(context.Background(), "Foo.Sum", args, &reply)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println(reply)
 }

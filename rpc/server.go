@@ -27,7 +27,7 @@ type Option struct {
 
 var DefaultOption = &Option{
 	MagicNumber:    MagicNumber,
-	CodecType:      codec.GobType,
+	CodecType:      codec.JsonType,
 	ConnectTimeout: time.Second * 10,
 }
 
