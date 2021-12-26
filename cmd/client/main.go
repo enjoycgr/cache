@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("network dial error: ", err)
 	}
-	args := &Args{
+	args := Args{
 		1,
 		2,
 	}

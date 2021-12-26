@@ -8,11 +8,11 @@ import (
 
 type Foo int
 
-type Args struct {
+type Args1 struct {
 	Num1, Num2 int
 }
 
-func (f Foo) Sum(args Args, reply *int) error {
+func (f Foo) Sum(args Args1, reply *int) error {
 	*reply = args.Num1 + args.Num2
 	return nil
 }
