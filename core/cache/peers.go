@@ -1,6 +1,8 @@
 package cache
 
-import "cache/cachepb"
+import (
+	"cache/core/cachepb"
+)
 
 type PeerPicker interface {
 	PickPeer(key string) (peer PeerGetter, ok bool)

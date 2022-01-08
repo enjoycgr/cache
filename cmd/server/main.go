@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cache/core/cache"
 	"cache/rpc"
 	"log"
 	"net"
@@ -18,8 +19,8 @@ func (f Foo) Sum(args Args1, reply *int) error {
 }
 
 func main() {
-	var foo Foo
-	rpc.Register(foo)
+	var group cache.Group
+	rpc.Register(group)
 
 	l, err := net.Listen("tcp", ":7001")
 	if err != nil {

@@ -256,7 +256,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 		}
 	}()
 
-	ch := make(chan clientResult)
+	ch := make(chan clientResult, 1)
 	go func() {
 		client, err := f(conn, opt)
 		ch <- clientResult{client: client, err: err}

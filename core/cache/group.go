@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"cache/cachepb"
-	"cache/lru"
+	"cache/core/cachepb"
+	"cache/core/lru"
 	"fmt"
 	"log"
 	"sync"

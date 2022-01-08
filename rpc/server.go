@@ -79,9 +79,10 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 
 	if f == nil {
 		log.Printf("rpc server: invalid codec type %s", opt.CodecType)
+		return
 	}
 
-	server.serveCodec(f(conn))
+	server.serveCodec(f(conn), &opt)
 }
 
 var invalidRequest = struct{}{}
@@ -91,7 +92,7 @@ var invalidRequest = struct{}{}
 // 1.readRequest 读取请求
 // 2.handleRequest 处理请求
 // 3.sendResponse 回复请求
-func (server *Server) serveCodec(cc codec.Codec) {
+func (server *Server) serveCodec(cc codec.Codec, opt *Option) {
 	sending := new(sync.Mutex)
 	wg := new(sync.WaitGroup)
 	for {
@@ -105,7 +106,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 			continue
 		}
 		wg.Add(1)
-		go server.handleRequest(cc, req, sending, wg)
+		go server.handleRequest(cc, req, sending, wg, opt.HandleTimeout)
 	}
 	wg.Wait()
 	_ = cc.Close()
@@ -171,11 +172,10 @@ func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interfa
 // handleRequest 执行请求并发送响应报文
 func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup, timeout time.Duration) {
 	defer wg.Done()
-	called := make(chan struct{})
-	sent := make(chan struct{})
+	called := make(chan struct{}, 1)
+	sent := make(chan struct{}, 1)
 	go func() {
 		err := req.svc.call(req.mtype, req.argv, req.replyv)
-		// TODO::time.After到时间且运行到这里的时候会造成goroutine泄露
 		called <- struct{}{}
 		if err != nil {
 			req.h.Error = err.Error()

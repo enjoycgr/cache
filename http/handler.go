@@ -1,14 +1,15 @@
-package cache
+package http
 
 import (
-	"cache/cachepb"
+	"cache/core/cache"
+	"cache/core/cachepb"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"net/http"
 	"strings"
 )
 
-func (p *HttpPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *http2.HttpPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, p.basePath) {
 		panic("HttpPool serving unexpected path:" + r.URL.Path)
 	}
@@ -24,7 +25,7 @@ func (p *HttpPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // 获取缓存
-func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
+func (p *http2.HttpPool) get(w http.ResponseWriter, r *http.Request) {
 	parts := strings.SplitN(r.URL.Path[len(p.basePath):], "/", 2)
 	if len(parts) != 2 {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -33,7 +34,7 @@ func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
 	groupName := parts[0]
 	key := parts[1]
 
-	group := GetGroup(groupName)
+	group := cache.GetGroup(groupName)
 	if group == nil {
 		http.Error(w, strings.Join([]string{"no such group", groupName}, ": "), http.StatusNotFound)
 		return
@@ -57,7 +58,7 @@ func (p *HttpPool) get(w http.ResponseWriter, r *http.Request) {
 }
 
 // 设置缓存
-func (p *HttpPool) post(w http.ResponseWriter, r *http.Request) {
+func (p *http2.HttpPool) post(w http.ResponseWriter, r *http.Request) {
 	parts := strings.SplitN(r.URL.Path[len(p.basePath):], "/", 1)
 	if len(parts) != 1 {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -65,7 +66,7 @@ func (p *HttpPool) post(w http.ResponseWriter, r *http.Request) {
 
 	groupName := parts[0]
 
-	group := GetGroup(groupName)
+	group := cache.GetGroup(groupName)
 	if group == nil {
 		http.Error(w, strings.Join([]string{"no such group", groupName}, ": "), http.StatusNotFound)
 		return
