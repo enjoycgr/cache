@@ -1,7 +1,7 @@
 package http
 
 import (
-	"cache/core/cache"
+	"cache/cache"
 	"cache/core/cachepb"
 	"google.golang.org/protobuf/proto"
 	"log"

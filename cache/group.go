@@ -2,7 +2,7 @@ package cache
 
 import (
 	"cache/core/cachepb"
-	"cache/core/lru"
+	"cache/lru"
 	"fmt"
 	"log"
 	"sync"

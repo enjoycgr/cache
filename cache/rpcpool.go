@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"cache/core/consistenthash"
+	"cache/consistenthash"
 	"cache/rpc"
 	"fmt"
 	"log"

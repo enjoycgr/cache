@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cache/cache"
 	_ "cache/config"
 	cache2 "cache/core/cache"
 	"cache/rpc"
@@ -19,8 +20,8 @@ var db = map[string]string{
 	"2":    "2",
 }
 
-func createGroup() *cache2.Group {
-	return cache2.NewGroup("scores", 2<<20, cache2.GetterFunc(
+func createGroup() *cache.Group {
+	return cache.NewGroup("scores", 2<<20, cache.GetterFunc(
 		func(key string) ([]byte, error) {
 			if v, ok := db[key]; ok {
 				return []byte(v), nil
@@ -32,7 +33,7 @@ func createGroup() *cache2.Group {
 
 // addr：本地节点，addrs：其他节点切片，c：group
 // 开启缓存服务
-func startCacheServer(addr string, addrs []string, c *cache2.Group) {
+func startCacheServer(addr string, addrs []string, c *cache.Group) {
 	peers := cache2.NewHttpPool(addr)
 	// 添加其他节点到哈希环
 	peers.Set(addrs...)
@@ -42,7 +43,7 @@ func startCacheServer(addr string, addrs []string, c *cache2.Group) {
 }
 
 // 开启api服务，和用户交互
-func startAPIServer(apiAddr string, c *cache2.Group) {
+func startAPIServer(apiAddr string, c *cache.Group) {
 	http.Handle("/api", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			key := r.URL.Query().Get("key")

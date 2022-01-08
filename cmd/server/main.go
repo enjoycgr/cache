@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cache/core/cache"
+	"cache/cache"
 	"cache/rpc"
 	"log"
 	"net"
