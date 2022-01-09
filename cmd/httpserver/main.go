@@ -20,7 +20,7 @@ func startAPIServer(apiAddr string) {
 	http.HandleFunc("/get", http2.Get)
 	http.HandleFunc("/set", http2.Set)
 	log.Println("font-end server is running at", apiAddr)
-	log.Fatal(http.ListenAndServe(":8002", nil))
+	log.Fatal(http.ListenAndServe(apiAddr, nil))
 }
 
 func main() {
@@ -28,5 +28,5 @@ func main() {
 	time.Sleep(1 * time.Second)
 	_ = createRpcPoll("127.0.0.1:8001", []string{"127.0.0.1:8001"})
 
-	startAPIServer("127.0.0.1:8001")
+	startAPIServer("127.0.0.1:8002")
 }
