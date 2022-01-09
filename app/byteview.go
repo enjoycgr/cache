@@ -1,20 +1,19 @@
-// 缓存值得抽象与封装
-package cache
+package app
 
 type ByteView struct {
-	b []byte
+	B []byte
 }
 
 func (v ByteView) Len() int {
-	return len(v.b)
+	return len(v.B)
 }
 
 func (v ByteView) ByteSlice() []byte {
-	return cloneBytes(v.b)
+	return cloneBytes(v.B)
 }
 
 func (v ByteView) String() string {
-	return string(v.b)
+	return string(v.B)
 }
 
 func cloneBytes(b []byte) []byte {

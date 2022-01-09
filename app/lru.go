@@ -1,9 +1,9 @@
 // Package lru 缓存淘汰策略
-package lru
+package app
 
 import "container/list"
 
-type Cache struct {
+type lru struct {
 	maxBytes  int64
 	nBytes    int64
 	ll        *list.List
@@ -21,8 +21,8 @@ type Value interface {
 }
 
 // New lru
-func New(maxBytes int64, OnEvicted func(string, Value)) *Cache {
-	return &Cache{
+func New(maxBytes int64, OnEvicted func(string, Value)) *lru {
+	return &lru{
 		maxBytes:  maxBytes,
 		ll:        list.New(),
 		cache:     make(map[string]*list.Element),
@@ -31,7 +31,7 @@ func New(maxBytes int64, OnEvicted func(string, Value)) *Cache {
 }
 
 // Add 添加缓存，并将该元素移动到队列头部，如果超出了缓存限制，执行RemoveOldest
-func (c *Cache) Add(key string, value Value) {
+func (c *lru) Add(key string, value Value) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
 		kv := ele.Value.(*entry)
@@ -47,8 +47,8 @@ func (c *Cache) Add(key string, value Value) {
 	}
 }
 
-// 移除队列最尾部的元素
-func (c *Cache) RemoveOldest() {
+// RemoveOldest 移除队列最尾部的元素
+func (c *lru) RemoveOldest() {
 	ele := c.ll.Back()
 	if ele != nil {
 		c.ll.Remove(ele)
@@ -61,8 +61,8 @@ func (c *Cache) RemoveOldest() {
 	}
 }
 
-// 获取缓存，并将该缓存移动到对猎头部
-func (c *Cache) Get(key string) (value Value, ok bool) {
+// Get 获取缓存，并将该缓存移动到队列头部
+func (c *lru) Get(key string) (value Value, ok bool) {
 	if ele, ok := c.cache[key]; ok {
 		c.ll.MoveToFront(ele)
 		kv := ele.Value.(*entry)
@@ -71,6 +71,6 @@ func (c *Cache) Get(key string) (value Value, ok bool) {
 	return
 }
 
-func (c *Cache) Len() int {
+func (c *lru) Len() int {
 	return c.ll.Len()
 }

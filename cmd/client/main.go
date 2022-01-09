@@ -2,26 +2,22 @@ package main
 
 import (
 	"cache/rpc"
+	"cache/server"
 	"context"
 	"fmt"
 	"log"
 )
-
-type Args struct {
-	Num1, Num2 int
-}
 
 func main() {
 	client, err := rpc.Dial("tcp", ":7001")
 	if err != nil {
 		log.Fatalln("network dial error: ", err)
 	}
-	args := Args{
-		1,
-		2,
+	args := server.GetRequest{
+		Key: "test",
 	}
-	var reply int
-	err = client.Call(context.Background(), "Foo.Sum", args, &reply)
+	var reply server.GetResponse
+	err = client.Call(context.Background(), "Service.Get", args, &reply)
 	if err != nil {
 		log.Fatalln(err)
 	}

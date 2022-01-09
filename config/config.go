@@ -8,7 +8,6 @@ import (
 func init() {
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
-	fmt.Println(1)
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))

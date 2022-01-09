@@ -1,4 +1,4 @@
-package cache
+package http
 
 import (
 	"cache/consistenthash"
@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	defaultBasePath = "/_cache/"
 	defaultReplicas = 50
 )
 
@@ -20,16 +19,27 @@ type RpcPool struct {
 	clients map[string]*rpc.Client // 保存节点
 }
 
-func NewRpcPool(addr []string) *RpcPool {
-	// todo
+var rpcPoll *RpcPool
+
+func NewRpcPool(self string) *RpcPool {
+	rpcPoll = &RpcPool{
+		self:    self,
+		peers:   consistenthash.New(defaultReplicas, nil),
+		clients: make(map[string]*rpc.Client),
+	}
+	return rpcPoll
+}
+
+func GetRpcPool() *RpcPool {
+	return rpcPoll
 }
 
 func (p *RpcPool) Log(format string, v ...interface{}) {
-	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
+	log.Printf("[server %s] %s", p.self, fmt.Sprintf(format, v...))
 }
 
-// Set 初始化consistent hash，并添加节点
-func (p *RpcPool) Set(peers ...string) {
+// SetPeers 初始化consistent hash，并添加节点
+func (p *RpcPool) SetPeers(peers ...string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.peers = consistenthash.New(defaultReplicas, nil)
@@ -44,7 +54,7 @@ func (p *RpcPool) Set(peers ...string) {
 func (p *RpcPool) PickPeer(key string) (*rpc.Client, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if peer := p.peers.Get(key); peer != "" && peer != p.self {
+	if peer := p.peers.Get(key); peer != "" {
 		p.Log("Pick rpc pool %s", peer)
 		return p.clients[peer], true
 	}

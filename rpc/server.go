@@ -53,7 +53,6 @@ func (server *Server) Accept(lis net.Listener) {
 	}
 }
 
-// Accept
 func Accept(lis net.Listener) {
 	DefaultServer.Accept(lis)
 }
