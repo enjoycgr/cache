@@ -11,6 +11,7 @@ import (
 
 func BenchmarkSet(b *testing.B) {
 	client, err := rpc.Dial("tcp", ":8001")
+	log.Println(1)
 	if err != nil {
 		log.Fatalln("network dial error: ", err)
 	}

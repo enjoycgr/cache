@@ -205,7 +205,7 @@ func (client *Client) send(call *Call) {
 // Go 异步call
 func (client *Client) Go(serviceMethod string, args, reply interface{}, done chan *Call) *Call {
 	if done == nil {
-		done = make(chan *Call, 10)
+		done = make(chan *Call, 1)
 	} else if cap(done) == 0 {
 		log.Panicln("rpc client: done channel is unbuffered")
 	}
@@ -222,7 +222,7 @@ func (client *Client) Go(serviceMethod string, args, reply interface{}, done cha
 
 // Call 同步call
 func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
-	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
+	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
 	select {
 	case <-ctx.Done():
 		client.removeCall(call.Seq)
