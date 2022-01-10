@@ -36,6 +36,7 @@ func (s Server) Get(request GetRequest, response *GetResponse) error {
 }
 
 func (s Server) Set(request SetRequest, response *SetResponse) error {
+	log.Println("call set start!")
 	cache.Set(request.Key, app.ByteView{B: []byte(request.Value)})
 	response.Result = true
 	log.Println("call set success!")
