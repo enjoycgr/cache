@@ -4,6 +4,7 @@ import (
 	"cache/rpc"
 	"cache/server"
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"testing"
@@ -11,7 +12,6 @@ import (
 
 func BenchmarkSet(b *testing.B) {
 	client, err := rpc.Dial("tcp", ":8001")
-	log.Println(1)
 	if err != nil {
 		log.Fatalln("network dial error: ", err)
 	}
@@ -24,5 +24,6 @@ func BenchmarkSet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		client.Call(context.Background(), "Server.Set", args, &reply)
+		fmt.Println(reply)
 	}
 }
