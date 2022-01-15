@@ -19,6 +19,8 @@ import (
 
 const MagicNumber = 0x3bef5c
 
+const ReadyNumber = 0x34ae32
+
 type Option struct {
 	MagicNumber    int
 	CodecType      codec.Type
@@ -81,6 +83,10 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 		return
 	}
 
+	if err := json.NewEncoder(conn).Encode(ReadyNumber); err != nil {
+		log.Println("rpc server: ready error: ", err)
+		return
+	}
 	server.serveCodec(f(conn), &opt)
 }
 
@@ -160,6 +166,8 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 
 // sendResponse 发送响应报文，因为报文需要一个个发送，不然会交织在一起，用sending锁住
 func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interface{}, sending *sync.Mutex) {
+	sending.Lock()
+	defer sending.Unlock()
 	if err := cc.Write(h, body); err != nil {
 		log.Println("rpc server: write response error:", err)
 	}
@@ -170,8 +178,6 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	defer wg.Done()
 	called := make(chan struct{}, 1)
 	sent := make(chan struct{}, 1)
-	sending.Lock()
-	defer sending.Unlock()
 	go func() {
 		err := req.svc.call(req.mtype, req.argv, req.replyv)
 		called <- struct{}{}

@@ -134,6 +134,7 @@ func NewClient(conn net.Conn, opt *Option) (*Client, error) {
 	if f == nil {
 		err := fmt.Errorf("invalid codec type %s", opt.CodecType)
 		log.Println("rpc client: codec error:", err)
+		_ = conn.Close()
 		return nil, err
 	}
 
@@ -141,6 +142,19 @@ func NewClient(conn net.Conn, opt *Option) (*Client, error) {
 		log.Println("rpc client: options error: ", err)
 		_ = conn.Close()
 		return nil, err
+	}
+
+	var ready int
+	if err := json.NewDecoder(conn).Decode(&ready); err != nil {
+		log.Println("rpc client: ready error: ", err)
+		_ = conn.Close()
+		return nil, err
+	}
+
+	if ready != ReadyNumber {
+		log.Println("ready number error")
+		_ = conn.Close()
+		return nil, errors.New("ready number error")
 	}
 
 	return newClientCodec(f(conn), opt), nil
