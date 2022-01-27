@@ -178,6 +178,7 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	defer wg.Done()
 	called := make(chan struct{}, 1)
 	sent := make(chan struct{}, 1)
+
 	go func() {
 		err := req.svc.call(req.mtype, req.argv, req.replyv)
 		called <- struct{}{}
